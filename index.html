@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>项目管理系统 - 模块化架构</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="glass-container">
+    <div class="hero">
+        <h1>📊 项目管理系统</h1>
+        <p>模块化 · 可扩展 · 纯前端</p>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- 左侧菜单栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-title">功能菜单</div>
+            <div class="module-buttons" id="moduleButtons">
+                <!-- 模块按钮会由 app.js 动态生成 -->
+            </div>
+        </aside>
+
+        <!-- 右侧主要内容区 -->
+        <main class="main-content">
+            <!-- 文件上传卡片 -->
+            <div class="toolbar-card">
+                <div class="file-zone">
+                    <label>📂 导入 Excel（企业微信智能表格导出）</label>
+                    <input type="file" id="excelUpload" accept=".xlsx, .xls, .csv" class="file-input">
+                </div>
+            </div>
+
+            <!-- 列映射配置面板（初始隐藏） -->
+            <div id="columnMappingPanel" class="toolbar-card" style="display: none; flex-direction: column; align-items: stretch;">
+                <!-- 基础配置（项目名称列、类型列） -->
+                <div class="mapping-grid">
+                    <div class="mapping-item">
+                        <label>🏷️ 项目名称列</label>
+                        <select id="projectColSelect"></select>
+                    </div>
+                    <div class="mapping-item">
+                        <label>🎨 项目类型列（可选）</label>
+                        <select id="typeColSelect">
+                            <option value="">— 不使用类型列 —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 多节点配置区 -->
+                <div style="margin-top: 16px;">
+                    <label style="font-weight: 700; display: block; margin-bottom: 12px;">📌 节点映射（每个节点产生一张卡片）</label>
+                    <div id="nodesContainer">
+                        <!-- 动态添加的节点配置行会放在这里 -->
+                    </div>
+                    <button type="button" id="addNodeBtn" class="btn btn-secondary" style="margin-top: 12px;">+ 添加节点</button>
+                </div>
+
+                <div class="btn-group" style="margin-top: 16px; justify-content: flex-end;">
+                    <button id="generateCalendarBtn" class="btn btn-primary">✨ 生成日历</button>
+                </div>
+            </div>
+
+            <!-- 模块内容容器 -->
+            <div id="moduleContainer" class="calendar-wrap">
+                <div style="text-align:center; padding:60px; color:#8aa0b5;">👈 上传 Excel 文件，配置节点后生成日历</div>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        ✅ 模块化架构 | 支持日历 · 甘特图 · 风险提醒（逐步扩展）
+    </footer>
+</div>
+
+<script src="config.js"></script>
+<script src="utils.js"></script>
+<script src="calendar.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
