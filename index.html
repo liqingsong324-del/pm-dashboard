@@ -63,9 +63,19 @@
                 </div>
             </div>
 
-            <!-- 模块内容容器 -->
-            <div id="moduleContainer" class="calendar-wrap">
-                <div style="text-align:center; padding:60px; color:#8aa0b5;">👈 上传 Excel 文件，配置节点后生成日历</div>
+            <!-- 增加全屏控制外壳容器 -->
+            <div class="fullscreen-wrapper" id="fullscreenWrapper">
+                <!-- 全屏控制悬浮栏（默认隐藏，生成日历后展示） -->
+                <div class="fullscreen-ctrl-bar" id="fullscreenCtrlBar" style="display: none;">
+                    <button id="toggleFullscreenBtn" class="btn-fullscreen">
+                        <span class="fs-icon">🎦</span> <span class="fs-text">全屏展示</span>
+                    </button>
+                </div>
+
+                <!-- 模块内容容器 -->
+                <div id="moduleContainer" class="calendar-wrap">
+                    <div style="text-align:center; padding:60px; color:#8aa0b5;">👈 上传 Excel 文件，配置节点后生成日历</div>
+                </div>
             </div>
         </main>
     </div>

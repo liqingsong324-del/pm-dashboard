@@ -1,4 +1,4 @@
-// app.js - 主控制逻辑（支持多节点拆分 + 修复新增节点）
+// app.js - 主控制逻辑（支持多节点拆分 + 修复新增节点 + 一键全屏切换）
 let globalRecords = [];
 let currentModule = null;
 let rawJson = null;
@@ -10,6 +10,7 @@ const moduleConstructors = {
 
 let fileInput, containerDiv, moduleButtonsDiv;
 let columnPanel, projectSelect, typeSelect, generateBtn, nodesContainer, addNodeBtn;
+let fullscreenCtrlBar, toggleFullscreenBtn; // 全屏新增元素
 
 document.addEventListener('DOMContentLoaded', () => {
     fileInput = document.getElementById('excelUpload');
@@ -21,6 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
     generateBtn = document.getElementById('generateCalendarBtn');
     nodesContainer = document.getElementById('nodesContainer');
     addNodeBtn = document.getElementById('addNodeBtn');
+    
+    // 全屏元素初始化
+    fullscreenCtrlBar = document.getElementById('fullscreenCtrlBar');
+    toggleFullscreenBtn = document.getElementById('toggleFullscreenBtn');
 
     CONFIG.modules.forEach(mod => {
         if (mod.enabled && moduleConstructors[mod.id]) {
@@ -36,8 +41,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fileInput.addEventListener('change', handleFileUpload);
     if (generateBtn) generateBtn.addEventListener('click', generateFromSelectedColumns);
-    if (addNodeBtn) addNodeBtn.addEventListener('click', () => addNodeRow());  // 不再需要传columns
+    if (addNodeBtn) addNodeBtn.addEventListener('click', () => addNodeRow());  
+    
+    // 绑定全屏点击事件
+    if (toggleFullscreenBtn) {
+        toggleFullscreenBtn.addEventListener('click', toggleFullscreenMode);
+    }
+    
+    // 绑定键盘 Esc 退出全屏事件
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.body.classList.contains('fullscreen-mode')) {
+            toggleFullscreenMode();
+        }
+    });
 });
+
+// 全屏状态切换逻辑
+function toggleFullscreenMode() {
+    const body = document.body;
+    const fsText = toggleFullscreenBtn.querySelector('.fs-text');
+    const fsIcon = toggleFullscreenBtn.querySelector('.fs-icon');
+    
+    body.classList.toggle('fullscreen-mode');
+    
+    if (body.classList.contains('fullscreen-mode')) {
+        fsText.textContent = '退出全屏';
+        fsIcon.textContent = '⏹';
+    } else {
+        fsText.textContent = '全屏展示';
+        fsIcon.textContent = '🎦';
+    }
+}
 
 async function handleFileUpload(e) {
     const file = e.target.files[0];
@@ -52,13 +86,15 @@ async function handleFileUpload(e) {
         populateSelect(typeSelect, currentColumns, CONFIG.defaultColumns.type);
         
         nodesContainer.innerHTML = '';
-        // 默认添加两个节点，传入列名
         addNodeRow(currentColumns);
         addNodeRow(currentColumns);
         
         columnPanel.style.display = 'flex';
         if (currentModule && currentModule.destroy) currentModule.destroy();
         containerDiv.innerHTML = '<div style="text-align:center; padding:60px; color:#8aa0b5;">✅ 已上传文件，请配置节点映射并点击“生成日历”</div>';
+        
+        // 上传新文件时先隐藏全屏控制条
+        if (fullscreenCtrlBar) fullscreenCtrlBar.style.display = 'none';
         globalRecords = [];
     }
 }
@@ -77,15 +113,13 @@ function populateSelect(selectElement, columns, defaultValue) {
 
 function addNodeRow(columns = null) {
     if (!nodesContainer) return;
-    // 如果没有传入 columns，则使用全局保存的 currentColumns
     const cols = columns || currentColumns;
-    if (!cols || cols.length === 0) return;  // 尚未上传文件时不做操作
+    if (!cols || cols.length === 0) return;  
 
     const rowDiv = document.createElement('div');
     rowDiv.className = 'mapping-grid';
     rowDiv.style.marginBottom = '12px';
     
-    // 日期列下拉框
     const dateDiv = document.createElement('div');
     dateDiv.className = 'mapping-item';
     dateDiv.innerHTML = `<label>📅 节点日期列</label>`;
@@ -99,7 +133,6 @@ function addNodeRow(columns = null) {
     });
     dateDiv.appendChild(dateSelect);
     
-    // 说明列下拉框
     const taskDiv = document.createElement('div');
     taskDiv.className = 'mapping-item';
     taskDiv.innerHTML = `<label>📝 节点说明列</label>`;
@@ -113,13 +146,12 @@ function addNodeRow(columns = null) {
     });
     taskDiv.appendChild(taskSelect);
     
-    // 删除按钮容器
     const delDiv = document.createElement('div');
     delDiv.className = 'mapping-item';
     delDiv.style.flex = '0 0 auto';
     const delBtn = document.createElement('button');
     delBtn.textContent = '删除';
-    delBtn.className = 'btn-node-delete';   // 使用独立class，便于样式控制
+    delBtn.className = 'btn-node-delete';   
     delBtn.onclick = () => rowDiv.remove();
     delDiv.appendChild(delBtn);
     
@@ -207,8 +239,12 @@ function generateFromSelectedColumns() {
     if (globalRecords.length === 0) {
         alert('没有有效的节点数据，请检查日期列格式或说明列是否为空');
         containerDiv.innerHTML = '<div style="text-align:center;padding:40px;">无有效数据</div>';
+        if (fullscreenCtrlBar) fullscreenCtrlBar.style.display = 'none';
         return;
     }
+    
+    // 成功生成日历后，让全屏控制按钮浮现出来
+    if (fullscreenCtrlBar) fullscreenCtrlBar.style.display = 'flex';
     
     if (currentModule) {
         currentModule.update(globalRecords);
