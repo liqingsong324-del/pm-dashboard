@@ -383,6 +383,30 @@ body {
     pointer-events: auto;
 }
 
+/* 🎯 核心修复：当卡片位于周一（第一列）时，弹窗靠左对齐，并向右展开，绝不冲出屏幕左边界 */
+.calendar tbody tr td:first-child .project-card:hover .custom-tooltip {
+    left: 0%;
+    transform: translateX(0) translateY(0) scale(1);
+}
+/* 周一弹窗连接小箭头同步向左纠偏 */
+.calendar tbody tr td:first-child .custom-tooltip .tooltip-arrow {
+    left: 24px;
+    transform: translateX(0);
+}
+
+/* 🎯 核心修复：当卡片位于周日（最后一列）时，弹窗靠右对齐，并向左展开，绝不冲出屏幕右边界 */
+.calendar tbody tr td:last-child .project-card:hover .custom-tooltip {
+    left: auto;
+    right: 0%;
+    transform: translateX(0) translateY(0) scale(1);
+}
+/* 周日弹窗连接小箭头同步向右纠偏 */
+.calendar tbody tr td:last-child .custom-tooltip .tooltip-arrow {
+    left: auto;
+    right: 24px;
+    transform: translateX(0);
+}
+
 /* 内部小标题：项目名称、更新内容 */
 .custom-tooltip .tooltip-title {
     font-size: 0.9rem;
