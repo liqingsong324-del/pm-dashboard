@@ -1,8 +1,8 @@
-// app.js - 主控制逻辑（已优化：节点映射默认仅显示1行 + 支持多节点拆分 + 修复新增节点 + 一键全屏切换）
+// app.js - 主控制逻辑（已优化：文件名格式化升级版，截图名称自动变为“项目日历_YYMMDD”）
 let globalRecords = [];
 let currentModule = null;
 let rawJson = null;
-let currentColumns = [];        // 新增：保存当前Excel的列名
+let currentColumns = [];        // 保存当前Excel的列名
 
 const moduleConstructors = {
     calendar: CalendarModule,
@@ -10,7 +10,7 @@ const moduleConstructors = {
 
 let fileInput, containerDiv, moduleButtonsDiv;
 let columnPanel, projectSelect, typeSelect, generateBtn, nodesContainer, addNodeBtn;
-let fullscreenCtrlBar, toggleFullscreenBtn; // 全屏新增元素
+let fullscreenCtrlBar, toggleFullscreenBtn, exportImageBtn; 
 
 document.addEventListener('DOMContentLoaded', () => {
     fileInput = document.getElementById('excelUpload');
@@ -23,9 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     nodesContainer = document.getElementById('nodesContainer');
     addNodeBtn = document.getElementById('addNodeBtn');
     
-    // 全屏元素初始化
     fullscreenCtrlBar = document.getElementById('fullscreenCtrlBar');
     toggleFullscreenBtn = document.getElementById('toggleFullscreenBtn');
+    exportImageBtn = document.getElementById('exportImageBtn'); 
 
     CONFIG.modules.forEach(mod => {
         if (mod.enabled && moduleConstructors[mod.id]) {
@@ -43,12 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (generateBtn) generateBtn.addEventListener('click', generateFromSelectedColumns);
     if (addNodeBtn) addNodeBtn.addEventListener('click', () => addNodeRow());  
     
-    // 绑定全屏点击事件
     if (toggleFullscreenBtn) {
         toggleFullscreenBtn.addEventListener('click', toggleFullscreenMode);
     }
+
+    if (exportImageBtn) {
+        exportImageBtn.addEventListener('click', exportModuleToImage);
+    }
     
-    // 绑定键盘 Esc 退出全屏事件
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && document.body.classList.contains('fullscreen-mode')) {
             toggleFullscreenMode();
@@ -56,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 全屏状态切换逻辑
 function toggleFullscreenMode() {
     const body = document.body;
     const fsText = toggleFullscreenBtn.querySelector('.fs-text');
@@ -73,19 +74,201 @@ function toggleFullscreenMode() {
     }
 }
 
+// 纯前端快速拍照导出（基于 Tr 精准剪裁本月前所有行 + 自定义 YYMMDD 文件名）
+function exportModuleToImage() {
+    if (!containerDiv || containerDiv.children.length === 0) {
+        alert('没有可以导出的日历内容');
+        return;
+    }
+
+    const originalText = exportImageBtn.innerHTML;
+    exportImageBtn.innerHTML = '<span>⏳</span> <span>正在渲染排期看板...</span>';
+    exportImageBtn.disabled = true;
+
+    // 🎯 1. 动态生成精简时间戳（精确到日）
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonthNum = now.getMonth() + 1;
+    const curDateNum = now.getDate();
+    const timeStampStr = `📷 截图留存时间：${curYear}-${String(curMonthNum).padStart(2, '0')}-${String(curDateNum).padStart(2, '0')}`;
+
+    // 🎯 2. 动态从数据源中读取当前主看板的目标年份与月份（用于页面内标题展示）
+    let targetYear = curYear;
+    let targetMonth = curMonthNum;
+    let displayTitleText = "项目管理日历";
+    
+    try {
+        if (globalRecords && globalRecords.length > 0) {
+            const firstDate = globalRecords[0].date; 
+            targetYear = firstDate.getFullYear();
+            targetMonth = firstDate.getMonth() + 1;
+            displayTitleText = `📅 项目管理日历 (${targetYear}年${String(targetMonth).padStart(2, '0')}月)`;
+        }
+    } catch (e) {
+        console.log("提取目标月份失败", e);
+    }
+
+    // 🎯 3. 注入高级双端标题栏
+    const titleHeader = document.createElement('div');
+    titleHeader.style.width = '100%';
+    titleHeader.style.boxSizing = 'border-box';
+    titleHeader.style.padding = '24px 20px 14px 20px';
+    titleHeader.style.display = 'flex';
+    titleHeader.style.justifyContent = 'space-between';
+    titleHeader.style.alignItems = 'flex-end';
+    titleHeader.style.borderBottom = '2px solid #eef2f6';
+    titleHeader.style.marginBottom = '12px';
+    titleHeader.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+    const titleLeft = document.createElement('div');
+    titleLeft.style.fontSize = '26px';
+    titleLeft.style.fontWeight = 'bold';
+    titleLeft.style.color = '#1f3c5d';
+    titleLeft.innerText = displayTitleText;
+
+    const titleRight = document.createElement('div');
+    titleRight.style.fontSize = '14px';
+    titleRight.style.color = '#8aa0b5';
+    titleRight.style.fontWeight = '500';
+    titleRight.innerText = timeStampStr;
+
+    titleHeader.appendChild(titleLeft);
+    titleHeader.appendChild(titleRight);
+    containerDiv.insertBefore(titleHeader, containerDiv.firstChild);
+
+    // 🎯 4. 样式解封以铺满全长图
+    const originalHeight = containerDiv.style.height;
+    const originalMaxHeight = containerDiv.style.maxHeight;
+    const originalOverflow = containerDiv.style.overflow;
+    const originalOverflowY = containerDiv.style.overflowY;
+
+    containerDiv.style.height = 'auto';
+    containerDiv.style.maxHeight = 'none';
+    containerDiv.style.overflow = 'visible';
+    containerDiv.style.overflowY = 'visible';
+
+    const scrollContainers = containerDiv.querySelectorAll('.calendar-wrap, [style*="overflow"]');
+    const savedStyles = [];
+    scrollContainers.forEach((el) => {
+        savedStyles.push({
+            el: el,
+            height: el.style.height,
+            maxHeight: el.style.maxHeight,
+            overflow: el.style.overflow,
+            overflowY: el.style.overflowY
+        });
+        el.style.height = 'auto';
+        el.style.maxHeight = 'none';
+        el.style.overflow = 'visible';
+        el.style.overflowY = 'visible';
+    });
+
+    // 🎯 5. 精准拦截：针对 .calendar-week-row 标签行做真日期过滤
+    const calendarRows = containerDiv.querySelectorAll('.calendar-week-row');
+    const hiddenRows = [];
+    
+    calendarRows.forEach(row => {
+        let shouldHideThisWeek = true;
+        for (let i = 0; i < row.cells.length; i++) {
+            const cell = row.cells[i];
+            const dateSpan = cell.querySelector('.date-number');
+            if (dateSpan) {
+                let [monthText, _] = dateSpan.innerText.split('/');
+                let cellMonth = parseInt(monthText);
+                if (cellMonth === targetMonth || cellMonth > targetMonth || (targetMonth === 12 && cellMonth === 1)) {
+                    shouldHideThisWeek = false;
+                    break;
+                }
+            }
+        }
+        if (shouldHideThisWeek) {
+            hiddenRows.push({ el: row, prevDisplay: row.style.display });
+            row.style.display = 'none';
+        }
+    });
+
+    // 🎯 6. 瞬间超清拍照
+    html2canvas(containerDiv, {
+        useCORS: true,          
+        allowTaint: true,       
+        scale: 2,               
+        backgroundColor: '#ffffff',
+        windowHeight: containerDiv.scrollHeight 
+    }).then(canvas => {
+        // 🎯 7. 即刻恢复网页现场原始形态
+        containerDiv.removeChild(titleHeader);
+        containerDiv.style.height = originalHeight;
+        containerDiv.style.maxHeight = originalMaxHeight;
+        containerDiv.style.overflow = originalOverflow;
+        containerDiv.style.overflowY = originalOverflowY;
+        
+        savedStyles.forEach(item => {
+            item.el.style.height = item.height;
+            item.el.style.maxHeight = item.maxHeight;
+            item.el.style.overflow = item.overflow;
+            item.el.style.overflowY = item.overflowY;
+        });
+
+        hiddenRows.forEach(item => {
+            item.el.style.display = item.prevDisplay;
+        });
+
+        // 🎯 8. 【核心修改点】：生成期望的“项目日历_260523”格式文件名（YYMMDD）
+        const shortYear = String(curYear).slice(-2); // 提取年份后两位，如 "26"
+        const shortMonth = String(curMonthNum).padStart(2, '0'); // 双位月份，如 "05"
+        const shortDate = String(curDateNum).padStart(2, '0'); // 双位日期，如 "23"
+        const fileName = `项目日历_${shortYear}${shortMonth}${shortDate}.png`;
+
+        // 触发长图高速下载
+        const imageUri = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement('a');
+        downloadLink.download = fileName;
+        downloadLink.href = imageUri;
+        
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        exportImageBtn.innerHTML = originalText;
+        exportImageBtn.disabled = false;
+    }).catch(err => {
+        // 异常回滚保护机制
+        if (titleHeader.parentNode === containerDiv) {
+            containerDiv.removeChild(titleHeader);
+        }
+        containerDiv.style.height = originalHeight;
+        containerDiv.style.maxHeight = originalMaxHeight;
+        containerDiv.style.overflow = originalOverflow;
+        containerDiv.style.overflowY = originalOverflowY;
+        savedStyles.forEach(item => {
+            item.el.style.height = item.height;
+            item.el.style.maxHeight = item.maxHeight;
+            item.el.style.overflow = item.overflow;
+            item.el.style.overflowY = item.overflowY;
+        });
+        hiddenRows.forEach(item => {
+            item.el.style.display = item.prevDisplay;
+        });
+
+        console.error('导出图片失败:', err);
+        alert('导出图片失败，请重试');
+        exportImageBtn.innerHTML = originalText;
+        exportImageBtn.disabled = false;
+    });
+}
+
 async function handleFileUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
     const data = await readExcelFile(file);
     if (data && data.length > 0) {
         rawJson = data;
-        currentColumns = Object.keys(rawJson[0]);   // 保存列名
+        currentColumns = Object.keys(rawJson[0]);
         
         populateSelect(projectSelect, currentColumns, CONFIG.defaultColumns.project);
         typeSelect.innerHTML = '<option value="">— 不使用类型列 —</option>';
         populateSelect(typeSelect, currentColumns, CONFIG.defaultColumns.type);
         
-        // 【✨ 第四项工作优化点】：清除容器后，默认只添加 1 行节点映射
         nodesContainer.innerHTML = '';
         addNodeRow(currentColumns);
         
@@ -93,7 +276,6 @@ async function handleFileUpload(e) {
         if (currentModule && currentModule.destroy) currentModule.destroy();
         containerDiv.innerHTML = '<div style="text-align:center; padding:60px; color:#8aa0b5;">✅ 已上传文件，请配置节点映射并点击“生成日历”</div>';
         
-        // 上传新文件时先隐藏全屏控制条
         if (fullscreenCtrlBar) fullscreenCtrlBar.style.display = 'none';
         globalRecords = [];
     }
@@ -243,7 +425,6 @@ function generateFromSelectedColumns() {
         return;
     }
     
-    // 成功生成日历后，让全屏控制按钮浮现出来
     if (fullscreenCtrlBar) fullscreenCtrlBar.style.display = 'flex';
     
     if (currentModule) {

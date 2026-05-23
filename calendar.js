@@ -1,4 +1,4 @@
-// calendar.js - 日历视图模块（已完美升级：动态继承原生配色独立悬浮大弹窗版）
+// calendar.js - 日历视图模块（已完美升级：动态继承原生配色独立悬浮大弹窗版 + 引入专属周行类名）
 const CalendarModule = {
     name: 'calendar',
     container: null,
@@ -60,7 +60,8 @@ const CalendarModule = {
         let html = `<table class="calendar"><thead><tr><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th></tr></thead><tbody>`;
         
         for (let week of weeks) {
-            html += `<tr>`;
+            // ✨ 核心修复：为每一行赋予专属类名 calendar-week-row，方便截图功能秒速精准定位
+            html += `<tr class="calendar-week-row">`;
             for (let day of week) {
                 let dayStr = day.toISOString().slice(0,10);
                 let tasks = map.get(dayStr) || [];

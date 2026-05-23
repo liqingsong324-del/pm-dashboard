@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>项目管理系统 - 模块化架构</title>
+    <!-- 引入 Excel 解析插件 -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <!-- 🚀 新增：引入纯前端网页截图拍照插件 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -66,9 +69,13 @@
             <!-- 增加全屏控制外壳容器 -->
             <div class="fullscreen-wrapper" id="fullscreenWrapper">
                 <!-- 全屏控制悬浮栏（默认隐藏，生成日历后展示） -->
-                <div class="fullscreen-ctrl-bar" id="fullscreenCtrlBar" style="display: none;">
+                <div class="fullscreen-ctrl-bar" id="fullscreenCtrlBar" style="display: none; gap: 10px;">
                     <button id="toggleFullscreenBtn" class="btn-fullscreen">
                         <span class="fs-icon">🎦</span> <span class="fs-text">全屏展示</span>
+                    </button>
+                    <!-- 🚀 新增：一键导出图片按钮，样式复用全屏按钮，保证整齐 -->
+                    <button id="exportImageBtn" class="btn-fullscreen" style="background: linear-gradient(135deg, #4c9a8e 0%, #367c71 100%);">
+                        <span>📸</span> <span>导出日历截图</span>
                     </button>
                 </div>
 
