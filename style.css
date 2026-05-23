@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-/* style.css - 优化版 UI + 节点对齐修复 + 删除按钮美化 */
+/* style.css - 完美标准网格版 UI（恢复原版 UI 表达形式） */
 * {
     margin: 0;
     padding: 0;
@@ -128,7 +127,7 @@ body {
     margin-bottom: 24px;
 }
 
-/* 基础列映射面板（项目名称列、类型列） */
+/* 基础列映射面板 */
 .mapping-grid {
     display: flex;
     flex-wrap: wrap;
@@ -156,7 +155,7 @@ body {
     font-family: inherit;
 }
 
-/* 节点配置区域：使用 Grid 强制对齐每一行的三列 */
+/* 节点配置区域 */
 #nodesContainer .mapping-grid {
     display: grid;
     grid-template-columns: 1fr 1fr auto;
@@ -173,7 +172,8 @@ body {
     justify-content: center;
     align-items: center;
 }
-/* 删除按钮美化 */
+
+/* 删除按钮 */
 .btn-node-delete {
     background: #fff1f0;
     border: 1px solid #fcd9d6;
@@ -185,9 +185,9 @@ body {
     font-weight: 500;
     transition: all 0.2s ease;
     white-space: nowrap;
-    align-self: center;      /* 强制垂直居中 */
-    line-height: 1;          /* 消除额外行高影响 */
-    margin: 0;               /* 确保无外边距 */
+    align-self: center;      
+    line-height: 1;          
+    margin: 0;               
 }
 .btn-node-delete:hover {
     background: #fee2e2;
@@ -243,6 +243,7 @@ body {
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.85rem;
+    table-layout: fixed; /* 固定列宽，确保七列绝对等分 */
 }
 .calendar th {
     position: sticky;
@@ -257,15 +258,20 @@ body {
     z-index: 20;
     backdrop-filter: blur(4px);
 }
+
+/* 【核心修正】统一所有行和格子的标准基础高度，防止空周被压缩 */
+.calendar tbody tr {
+    height: 180px; 
+}
 .calendar td {
     border: 1px solid #f0f2f5;
     vertical-align: top;
     padding: 12px 8px;
     background: white;
     transition: background 0.1s;
-    min-height: 130px;
-    height: auto;
+    height: 100%; /* 让单元格填满行的高度 */
 }
+
 .calendar td.other-month {
     background-color: #fafcff;
 }
@@ -331,19 +337,13 @@ body {
     color: #4b6b8a;
     word-break: break-word;
 }
+
+/* 【还原】无项目日子里的“—”符号表现样式 */
 .empty-day {
     color: #cbd5e1;
     text-align: center;
     font-size: 0.8rem;
     margin-top: 20px;
-}
-
-footer {
-    text-align: center;
-    padding: 16px;
-    font-size: 0.7rem;
-    color: #7c9bb5;
-    border-top: 1px solid #eef2f6;
 }
 
 /* 响应式 */
@@ -355,7 +355,6 @@ footer {
     .module-btn { padding: 8px 16px; font-size: 0.85rem; }
     .calendar th, .calendar td { padding: 8px 4px; }
     .project-card:hover { transform: none; }
-    /* 移动端节点配置行改为纵向堆叠 */
     #nodesContainer .mapping-grid {
         grid-template-columns: 1fr;
         gap: 12px;
@@ -373,380 +372,4 @@ footer {
     .calendar-wrap { padding: 0; overflow: visible; max-height: none; }
     .calendar th { position: static; }
     .project-card { break-inside: avoid; }
-=======
-/* style.css - 优化版 UI + 节点对齐修复 + 删除按钮美化 */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    background: #f1f5f9;
-    font-family: 'Inter', 'Segoe UI', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
-    padding: 24px;
-    min-height: 100vh;
-}
-
-.glass-container {
-    max-width: 1600px;
-    margin: 0 auto;
-    background: rgba(255, 255, 255, 0.96);
-    border-radius: 32px;
-    box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.02);
-    overflow: hidden;
-    backdrop-filter: blur(2px);
-}
-
-.hero {
-    background: linear-gradient(135deg, #1e3a5f 0%, #2b5f8a 100%);
-    padding: 24px 32px;
-    color: white;
-}
-.hero h1 {
-    font-size: 1.8rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    margin-bottom: 6px;
-}
-.hero p {
-    opacity: 0.8;
-    font-size: 0.9rem;
-}
-
-.toolbar-card {
-    background: white;
-    border-radius: 24px;
-    padding: 20px 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    border: 1px solid #eef2f6;
-}
-
-.file-zone label {
-    font-weight: 600;
-    color: #1e3a5f;
-    display: block;
-    margin-bottom: 8px;
-    font-size: 0.85rem;
-}
-.file-input {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 40px;
-    padding: 10px 16px;
-    width: 100%;
-    transition: 0.2s;
-}
-.file-input:hover {
-    border-color: #2b5f8a;
-}
-
-/* 左侧菜单 */
-.dashboard-layout {
-    display: flex;
-    gap: 0;
-    min-height: 70vh;
-}
-.sidebar {
-    width: 240px;
-    background: #fafcff;
-    border-right: 1px solid #eef2f6;
-    padding: 24px 16px;
-    flex-shrink: 0;
-}
-.sidebar-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #5b7f9e;
-    margin-bottom: 20px;
-    padding-left: 12px;
-}
-.module-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-.module-btn {
-    background: transparent;
-    border: none;
-    padding: 12px 16px;
-    border-radius: 14px;
-    font-weight: 500;
-    font-size: 0.95rem;
-    text-align: left;
-    cursor: pointer;
-    transition: 0.2s;
-    color: #2c3e50;
-    font-family: inherit;
-}
-.module-btn:hover {
-    background: #eef2ff;
-    color: #1e5f7e;
-}
-.module-btn.active {
-    background: #e6f0fa;
-    color: #1e5f7e;
-    font-weight: 600;
-    border-left: 3px solid #2b5f8a;
-}
-
-/* 右侧主区域 */
-.main-content {
-    flex: 1;
-    padding: 24px 28px;
-    overflow-x: auto;
-}
-.main-content .toolbar-card {
-    margin-bottom: 24px;
-}
-
-/* 基础列映射面板（项目名称列、类型列） */
-.mapping-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    align-items: flex-end;
-}
-.mapping-item {
-    flex: 1;
-    min-width: 160px;
-}
-.mapping-item label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #3b6e8f;
-    margin-bottom: 6px;
-    display: block;
-}
-.mapping-item select {
-    width: 100%;
-    padding: 10px 14px;
-    border-radius: 32px;
-    border: 1px solid #e2e8f0;
-    background: white;
-    font-size: 0.85rem;
-    font-family: inherit;
-}
-
-/* 节点配置区域：使用 Grid 强制对齐每一行的三列 */
-#nodesContainer .mapping-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: 20px;
-    align-items: center;
-    margin-bottom: 12px;
-}
-#nodesContainer .mapping-item {
-    flex: none;
-    min-width: 0;
-}
-#nodesContainer .mapping-item:last-child {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-/* 删除按钮美化 */
-.btn-node-delete {
-    background: #fff1f0;
-    border: 1px solid #fcd9d6;
-    color: #c0392b;
-    padding: 8px 20px;
-    border-radius: 32px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    align-self: center;      /* 强制垂直居中 */
-    line-height: 1;          /* 消除额外行高影响 */
-    margin: 0;               /* 确保无外边距 */
-}
-.btn-node-delete:hover {
-    background: #fee2e2;
-    border-color: #e74c3c;
-    color: #a82313;
-    transform: translateY(-1px);
-}
-
-.btn-group {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-}
-.btn {
-    border: none;
-    padding: 8px 20px;
-    border-radius: 32px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: 0.2s;
-    background: white;
-    color: #1e466e;
-}
-.btn-primary {
-    background: #2b5f8a;
-    color: white;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-.btn-primary:hover {
-    background: #1e466e;
-    transform: translateY(-1px);
-}
-.btn-secondary {
-    background: #f1f5f9;
-    color: #2c3e50;
-}
-.btn-secondary:hover {
-    background: #e2e8f0;
-}
-
-/* 日历容器 */
-.calendar-wrap {
-    overflow-x: auto;
-    max-height: 75vh;
-    overflow-y: auto;
-    border-radius: 24px;
-    background: white;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
-}
-
-.calendar {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.85rem;
-}
-.calendar th {
-    position: sticky;
-    top: 0;
-    background: #ffffff;
-    font-weight: 600;
-    font-size: 0.85rem;
-    padding: 16px 8px;
-    text-align: center;
-    color: #2c5a7a;
-    border-bottom: 1px solid #e9edf2;
-    z-index: 20;
-    backdrop-filter: blur(4px);
-}
-.calendar td {
-    border: 1px solid #f0f2f5;
-    vertical-align: top;
-    padding: 12px 8px;
-    background: white;
-    transition: background 0.1s;
-    min-height: 130px;
-    height: auto;
-}
-.calendar td.other-month {
-    background-color: #fafcff;
-}
-.date-head {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 12px;
-}
-.date-number {
-    background: #f1f5f9;
-    color: #1e3a5f;
-    font-size: 0.9rem;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 40px;
-    display: inline-block;
-    text-align: center;
-}
-.date-number.today-date {
-    background: linear-gradient(135deg, #2b5f8a, #1e466e);
-    color: white;
-    box-shadow: 0 2px 8px rgba(43, 95, 138, 0.3);
-}
-.weekend-bg {
-    background-color: #fefaf5;
-}
-.holiday-bg {
-    background-color: #fff6f0;
-}
-.today-bg {
-    background-color: #eef7ff;
-    box-shadow: inset 0 0 0 1px #2b5f8a;
-}
-
-/* 卡片样式 */
-.project-card {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 12px 10px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-    transition: all 0.2s ease;
-    border-left-width: 4px;
-    border-left-style: solid;
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-}
-.project-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 20px -12px rgba(0, 0, 0, 0.15);
-    background: #ffffff;
-}
-.card-proj {
-    font-weight: 700;
-    font-size: 0.85rem;
-    margin-bottom: 6px;
-}
-.card-desc {
-    font-size: 0.75rem;
-    line-height: 1.4;
-    color: #4b6b8a;
-    word-break: break-word;
-}
-.empty-day {
-    color: #cbd5e1;
-    text-align: center;
-    font-size: 0.8rem;
-    margin-top: 20px;
-}
-
-footer {
-    text-align: center;
-    padding: 16px;
-    font-size: 0.7rem;
-    color: #7c9bb5;
-    border-top: 1px solid #eef2f6;
-}
-
-/* 响应式 */
-@media (max-width: 800px) {
-    body { padding: 12px; }
-    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #eef2f6; }
-    .dashboard-layout { flex-direction: column; }
-    .module-buttons { flex-direction: row; flex-wrap: wrap; }
-    .module-btn { padding: 8px 16px; font-size: 0.85rem; }
-    .calendar th, .calendar td { padding: 8px 4px; }
-    .project-card:hover { transform: none; }
-    /* 移动端节点配置行改为纵向堆叠 */
-    #nodesContainer .mapping-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    #nodesContainer .mapping-item:last-child {
-        justify-content: flex-end;
-    }
-}
-
-/* 打印 */
-@media print {
-    body { background: white; padding: 0; }
-    .glass-container { box-shadow: none; border-radius: 0; }
-    .toolbar-card, .module-buttons, .file-zone, footer, .sidebar { display: none; }
-    .calendar-wrap { padding: 0; overflow: visible; max-height: none; }
-    .calendar th { position: static; }
-    .project-card { break-inside: avoid; }
->>>>>>> d1d33e4b1f39d07d51a7224ab903259a311df42a
 }

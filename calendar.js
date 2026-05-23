@@ -58,7 +58,9 @@ const CalendarModule = {
         const colorPalette = CONFIG.colorPalette;
 
         let html = `<table class="calendar"><thead><tr><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th></tr></thead><tbody>`;
+        
         for (let week of weeks) {
+            // 保持标准的行结构，不做特殊差异化处理
             html += `<tr>`;
             for (let day of week) {
                 let dayStr = day.toISOString().slice(0,10);
