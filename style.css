@@ -1,4 +1,4 @@
-/* style.css - 完美标准网格版 UI（恢复原版 UI 表达形式） */
+/* style.css - 皮肤深度融合网格版 UI（完整同步版：保留原生卡片精美配色 + 继承风格级独立悬浮大弹窗） */
 * {
     margin: 0;
     padding: 0;
@@ -243,7 +243,7 @@ body {
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.85rem;
-    table-layout: fixed; /* 固定列宽，确保七列绝对等分 */
+    table-layout: fixed; 
 }
 .calendar th {
     position: sticky;
@@ -259,7 +259,6 @@ body {
     backdrop-filter: blur(4px);
 }
 
-/* 【核心修正】统一所有行和格子的标准基础高度，防止空周被压缩 */
 .calendar tbody tr {
     height: 180px; 
 }
@@ -269,7 +268,8 @@ body {
     padding: 12px 8px;
     background: white;
     transition: background 0.1s;
-    height: 100%; /* 让单元格填满行的高度 */
+    height: 100%; 
+    position: relative; /* 核心：为内部弹窗提供精确的原点参照 */
 }
 
 .calendar td.other-month {
@@ -307,30 +307,36 @@ body {
     box-shadow: inset 0 0 0 1px #2b5f8a;
 }
 
-/* 卡片样式 */
+/* ==========================================================================
+   【深度视觉融合】保持原生精美卡片配色 + 风格一致的高逼真独立大弹窗
+   ========================================================================== */
 .project-card {
-    background: #ffffff;
     border-radius: 16px;
     padding: 12px 10px;
     margin-bottom: 10px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-    transition: all 0.2s ease;
     border-left-width: 4px;
     border-left-style: solid;
     display: flex;
     flex-direction: column;
     cursor: pointer;
+    position: relative; 
+    z-index: 1;
+    transition: box-shadow 0.15s ease;
 }
+
+/* 悬停时：当前卡片提至最高层级，防止弹窗被隔壁格子遮挡 */
 .project-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 20px -12px rgba(0, 0, 0, 0.15);
-    background: #ffffff;
+    z-index: 999 !important; 
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
+
 .card-proj {
     font-weight: 700;
     font-size: 0.85rem;
     margin-bottom: 6px;
 }
+
 .card-desc {
     font-size: 0.75rem;
     line-height: 1.4;
@@ -338,7 +344,96 @@ body {
     word-break: break-word;
 }
 
-/* 【还原】无项目日子里的“—”符号表现样式 */
+/* --------------------------------------------------------------------------
+   ✨ 新增：与原卡片风格高度统一的 HTML 结构大弹窗组件
+   -------------------------------------------------------------------------- */
+.custom-tooltip {
+    position: absolute;
+    bottom: 120%; /* 悬浮于原卡片上方 */
+    left: 50%;
+    transform: translateX(-50%) translateY(10px) scale(0.96);
+    width: 400px; /* 视野微调宽至 400px，排版更舒展 */
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 22px;
+    border-radius: 24px;
+    border-left: 6px solid transparent; /* 动态继承 JS 赋予的 border 颜色 */
+    
+    /* 极致视觉：带有一层微弱的高级毛玻璃雾面，避免完全死白 */
+    backdrop-filter: blur(10px);
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.22), 
+                0 10px 24px -8px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    
+    /* 基础动效隐藏 */
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                opacity 0.15s ease;
+    z-index: 1000;
+}
+
+/* 悬停唤醒大弹窗 */
+.project-card:hover .custom-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* 内部小标题：项目名称、更新内容 */
+.custom-tooltip .tooltip-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.custom-tooltip .tooltip-title .icon {
+    font-size: 1rem;
+}
+
+/* 内部项目名：动态继承专属文本高亮色，且字体放到 1.15rem 满足会议投屏 */
+.custom-tooltip .tooltip-project-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    word-break: break-word;
+}
+
+/* 弹窗内的精致分割线 */
+.custom-tooltip .tooltip-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.06);
+    margin-bottom: 12px;
+}
+
+/* 节点内容主体：采用深度碳黑，极高对比度利于阅读 */
+.custom-tooltip .tooltip-content-body {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.6;
+    color: #1e293b; 
+    word-break: break-word;
+}
+
+/* 💡 底部的连接小箭头：利用绝对定位贴在弹窗正下方 */
+.custom-tooltip .tooltip-arrow {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 8px 0 8px;
+    border-style: solid;
+    border-color: transparent transparent transparent transparent; /* 上边框颜色会被内联 JS 动态覆盖 */
+    width: 0;
+    height: 0;
+}
+
+/* 无项目日子里的“—”符号表现样式 */
 .empty-day {
     color: #cbd5e1;
     text-align: center;
@@ -354,7 +449,10 @@ body {
     .module-buttons { flex-direction: row; flex-wrap: wrap; }
     .module-btn { padding: 8px 16px; font-size: 0.85rem; }
     .calendar th, .calendar td { padding: 8px 4px; }
-    .project-card:hover { transform: none; }
+    
+    /* 移动端关闭弹窗，防止移动端手势冲突 */
+    .custom-tooltip { display: none !important; }
+    
     #nodesContainer .mapping-grid {
         grid-template-columns: 1fr;
         gap: 12px;
@@ -372,24 +470,22 @@ body {
     .calendar-wrap { padding: 0; overflow: visible; max-height: none; }
     .calendar th { position: static; }
     .project-card { break-inside: avoid; }
-}/* ==========================================================================
-   【新增功能】开会专属：日历视图一键全屏化排版及控制控件样式
-   ========================================================================== */
+}
 
-/* 1. 外层包裹壳，用来做按钮的绝对定位参照 */
+/* ==========================================================================
+   开会专属：日历视图一键全屏化排版及控制控件样式
+   ========================================================================== */
 .fullscreen-wrapper {
     position: relative;
     width: 100%;
 }
 
-/* 2. 悬浮全屏控制条栏 */
 .fullscreen-ctrl-bar {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 12px;
 }
 
-/* 3. 高颜值大厂全屏切换按钮 */
 .btn-fullscreen {
     background: #ffffff;
     border: 1px solid #cbd5e1;
@@ -413,14 +509,12 @@ body {
     box-shadow: 0 4px 10px rgba(43, 95, 138, 0.1);
 }
 
-/* 4. 【核心控制逻辑】激活全屏状态下的页面极简排版规则 */
 body.fullscreen-mode {
     padding: 0 !important;
-    overflow: hidden !important; /* 隐藏浏览器主滚动条 */
+    overflow: hidden !important; 
     background: #ffffff !important;
 }
 
-/* 隐藏无关元素 */
 body.fullscreen-mode .hero,
 body.fullscreen-mode .sidebar,
 body.fullscreen-mode .main-content > .toolbar-card,
@@ -428,7 +522,6 @@ body.fullscreen-mode footer {
     display: none !important;
 }
 
-/* 让主区域撑满全屏 */
 body.fullscreen-mode .glass-container {
     max-width: 100vw !important;
     height: 100vh !important;
@@ -447,12 +540,11 @@ body.fullscreen-mode .main-content {
     flex-direction: column;
 }
 
-/* 5. 按钮在全屏状态下变成右下角/右上角固定常驻形态 */
 body.fullscreen-mode .fullscreen-ctrl-bar {
     position: fixed;
     top: 16px;
     right: 24px;
-    z-index: 9999; /* 永远浮在日历表格最上方 */
+    z-index: 9999; 
     margin-bottom: 0;
 }
 body.fullscreen-mode .btn-fullscreen {
@@ -462,7 +554,6 @@ body.fullscreen-mode .btn-fullscreen {
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-/* 6. 全屏状态下，日历的最大高度自动重置，拉伸撑满整个显示器 */
 body.fullscreen-mode .calendar-wrap {
     flex: 1;
     max-height: calc(100vh - 32px) !important;
