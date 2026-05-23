@@ -1,4 +1,4 @@
-// app.js - 主控制逻辑（支持多节点拆分 + 修复新增节点 + 一键全屏切换）
+// app.js - 主控制逻辑（已优化：节点映射默认仅显示1行 + 支持多节点拆分 + 修复新增节点 + 一键全屏切换）
 let globalRecords = [];
 let currentModule = null;
 let rawJson = null;
@@ -85,8 +85,8 @@ async function handleFileUpload(e) {
         typeSelect.innerHTML = '<option value="">— 不使用类型列 —</option>';
         populateSelect(typeSelect, currentColumns, CONFIG.defaultColumns.type);
         
+        // 【✨ 第四项工作优化点】：清除容器后，默认只添加 1 行节点映射
         nodesContainer.innerHTML = '';
-        addNodeRow(currentColumns);
         addNodeRow(currentColumns);
         
         columnPanel.style.display = 'flex';

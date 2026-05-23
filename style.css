@@ -155,12 +155,14 @@ body {
     font-family: inherit;
 }
 
-/* 节点配置区域 */
+/* ==========================================================================
+   ✨ 【第五项工作优化点】：节点配置区域 UI 排版对齐调整
+   ========================================================================== */
 #nodesContainer .mapping-grid {
     display: grid;
     grid-template-columns: 1fr 1fr auto;
     gap: 20px;
-    align-items: center;
+    align-items: flex-end;   /* 💡 修改：由 center 改为 flex-end，强制按钮与左侧下拉框底部对齐 */
     margin-bottom: 12px;
 }
 #nodesContainer .mapping-item {
@@ -171,6 +173,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 41px;           /* 💡 新增：使包裹容器高度与左侧 select 控件的整体高度（文字+上下padding）完全一致 */
 }
 
 /* 删除按钮 */
@@ -178,15 +181,15 @@ body {
     background: #fff1f0;
     border: 1px solid #fcd9d6;
     color: #c0392b;
-    padding: 8px 20px;
+    padding: 10px 24px;     /* 💡 修改：上下 padding 调整为 10px，左右增加到 24px，使其厚度和视觉饱满度与下拉框完美平行 */
     border-radius: 32px;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.85rem;     /* 💡 修改：字体微调至 0.85rem，与下拉框字体大小保持一致 */
     font-weight: 500;
     transition: all 0.2s ease;
     white-space: nowrap;
     align-self: center;      
-    line-height: 1;          
+    line-height: 1.2;       /* 💡 修改：微调行高，确保按钮文字在内部垂直绝对居中 */   
     margin: 0;               
 }
 .btn-node-delete:hover {
