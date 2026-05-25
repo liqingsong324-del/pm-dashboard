@@ -1,4 +1,4 @@
-// calendar.js - 日历视图模块（已完美升级：动态继承原生配色独立悬浮大弹窗版 + 引入专属周行类名）
+// calendar.js - 日历视图模块（已修复日期时区偏移问题）
 const CalendarModule = {
     name: 'calendar',
     container: null,
@@ -53,17 +53,19 @@ const CalendarModule = {
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonth = today.getMonth();
-        const todayStr = new Date().toISOString().slice(0,10);
+        // 修复点：使用本地时间格式化字符串，避免时区偏移
+        const todayStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
         const holidays = CONFIG.holidays;
         const colorPalette = CONFIG.colorPalette;
 
         let html = `<table class="calendar"><thead><tr><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th></tr></thead><tbody>`;
         
         for (let week of weeks) {
-            // ✨ 核心修复：为每一行赋予专属类名 calendar-week-row，方便截图功能秒速精准定位
             html += `<tr class="calendar-week-row">`;
             for (let day of week) {
-                let dayStr = day.toISOString().slice(0,10);
+                // 核心修复：强制使用本地时间的年、月、日拼接字符串，确保与 groupRecordsByDate 的 Key 一致
+                let dayStr = `${day.getFullYear()}-${(day.getMonth() + 1).toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
+                
                 let tasks = map.get(dayStr) || [];
                 let isWeekend = (day.getDay() === 0 || day.getDay() === 6);
                 let isHolidayFlag = isHoliday(day, holidays);
@@ -83,25 +85,17 @@ const CalendarModule = {
                 } else {
                     for (let t of tasks) {
                         let colorStyle = getColorForType(t.type, colorPalette);
-                        
-                        // 生成卡片容器
                         html += `<div class="project-card" style="border-left-color: ${colorStyle.border}; background: ${colorStyle.bg};">`;
-                        
-                        // 日常显示的简短内容
                         html += `<div class="card-proj" style="color: ${colorStyle.text};">【${escapeHtml(t.project)}】</div>`;
                         html += `<div class="card-desc">${escapeHtml(t.description).replace(/\n/g, '<br>')}</div>`;
-                        
-                        // 【✨ 高级交互升级】：塞入一个完全由 HTML+CSS 控制的独立大弹窗，动态共享父级配色样式
                         html += `<div class="custom-tooltip" style="border-left-color: ${colorStyle.border}; background: linear-gradient(135deg, #ffffff 0%, ${colorStyle.bg} 100%);">`;
                         html += `    <div class="tooltip-title"><span class="icon">📌</span>项目名称：</div>`;
                         html += `    <div class="tooltip-project-name" style="color: ${colorStyle.text};">${escapeHtml(t.project)}</div>`;
                         html += `    <div class="tooltip-divider"></div>`;
                         html += `    <div class="tooltip-title"><span class="icon">📝</span>节点更新内容：</div>`;
                         html += `    <div class="tooltip-content-body">${escapeHtml(t.description).replace(/\n/g, '<br>')}</div>`;
-                        html += `    <!-- 小箭头 -->`;
                         html += `    <div class="tooltip-arrow" style="border-top-color: ${colorStyle.border};"></div>`;
                         html += `</div>`;
-
                         html += `</div>`;
                     }
                 }

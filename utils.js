@@ -1,4 +1,4 @@
-// utils.js - 公共函数
+// utils.js - 公共函数（已彻底修复 groupRecordsByDate 时区偏移 BUG）
 function parseDate(value) {
     if (!value) return null;
     if (typeof value === 'number') {
@@ -92,7 +92,8 @@ function parseExcelToRecords(rawJson, columnMapping) {
 function groupRecordsByDate(records) {
     let map = new Map();
     for (let r of records) {
-        let key = r.date.toISOString().slice(0,10);
+        // ✨ 核心修复：改用本地时间拼接 Key，防止 classification 时数据因时区提前一天
+        let key = `${r.date.getFullYear()}-${(r.date.getMonth() + 1).toString().padStart(2, '0')}-${r.date.getDate().toString().padStart(2, '0')}`;
         if (!map.has(key)) map.set(key, []);
         map.get(key).push({ project: r.project, description: r.description, type: r.type });
     }

@@ -4,11 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>项目管理系统 - 模块化架构</title>
-    <!-- 引入 Excel 解析插件 -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <!-- 🚀 新增：引入纯前端网页截图拍照插件 -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 💡 局部样式隔离：纯前端动态筛选选框精细样式方案 */
+        .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-right: auto; /* 让筛选器靠左，按钮组靠右，形成自然的视觉拉伸对齐 */
+        }
+        .filter-select {
+            padding: 0 12px;
+            height: 36px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            background-color: #ffffff;
+            color: #495057;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            max-width: 180px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .filter-select:focus {
+            border-color: #4d90fe;
+            box-shadow: 0 0 0 2px rgba(77, 144, 254, 0.2);
+        }
+    </style>
 </head>
 <body>
 <div class="glass-container">
@@ -18,17 +46,13 @@
     </div>
 
     <div class="dashboard-layout">
-        <!-- 左侧菜单栏 -->
         <aside class="sidebar">
             <div class="sidebar-title">功能菜单</div>
             <div class="module-buttons" id="moduleButtons">
-                <!-- 模块按钮会由 app.js 动态生成 -->
-            </div>
+                </div>
         </aside>
 
-        <!-- 右侧主要内容区 -->
         <main class="main-content">
-            <!-- 文件上传卡片 -->
             <div class="toolbar-card">
                 <div class="file-zone">
                     <label>📂 导入 Excel（企业微信智能表格导出）</label>
@@ -36,9 +60,7 @@
                 </div>
             </div>
 
-            <!-- 列映射配置面板（初始隐藏） -->
             <div id="columnMappingPanel" class="toolbar-card" style="display: none; flex-direction: column; align-items: stretch;">
-                <!-- 基础配置（项目名称列、类型列） -->
                 <div class="mapping-grid">
                     <div class="mapping-item">
                         <label>🏷️ 项目名称列</label>
@@ -52,12 +74,10 @@
                     </div>
                 </div>
 
-                <!-- 多节点配置区 -->
                 <div style="margin-top: 16px;">
                     <label style="font-weight: 700; display: block; margin-bottom: 12px;">📌 节点映射（每个节点产生一张卡片）</label>
                     <div id="nodesContainer">
-                        <!-- 动态添加的节点配置行会放在这里 -->
-                    </div>
+                        </div>
                     <button type="button" id="addNodeBtn" class="btn btn-secondary" style="margin-top: 12px;">+ 添加节点</button>
                 </div>
 
@@ -66,20 +86,19 @@
                 </div>
             </div>
 
-            <!-- 增加全屏控制外壳容器 -->
             <div class="fullscreen-wrapper" id="fullscreenWrapper">
-                <!-- 全屏控制悬浮栏（默认隐藏，生成日历后展示） -->
-                <div class="fullscreen-ctrl-bar" id="fullscreenCtrlBar" style="display: none; gap: 10px;">
+                <div class="fullscreen-ctrl-bar" id="fullscreenCtrlBar" style="display: none; gap: 10px; align-items: center; justify-content: flex-end; width: 100%;">
+                    
+                    <div id="dynamicFilterContainer" class="filter-container"></div>
+                    
                     <button id="toggleFullscreenBtn" class="btn-fullscreen">
                         <span class="fs-icon">🎦</span> <span class="fs-text">全屏展示</span>
                     </button>
-                    <!-- 🚀 新增：一键导出图片按钮，样式复用全屏按钮，保证整齐 -->
                     <button id="exportImageBtn" class="btn-fullscreen" style="background: linear-gradient(135deg, #4c9a8e 0%, #367c71 100%);">
                         <span>📸</span> <span>导出日历截图</span>
                     </button>
                 </div>
 
-                <!-- 模块内容容器 -->
                 <div id="moduleContainer" class="calendar-wrap">
                     <div style="text-align:center; padding:60px; color:#8aa0b5;">👈 上传 Excel 文件，配置节点后生成日历</div>
                 </div>

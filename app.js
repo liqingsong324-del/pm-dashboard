@@ -1,4 +1,4 @@
-// app.js - 主控制逻辑（已优化：文件名格式化升级版，截图名称自动变为“项目日历_YYMMDD”）
+// app.js - 主控制逻辑（全新升级：双维度自由组合高级筛选看板，完全交由使用者自定义维度与值）
 let globalRecords = [];
 let currentModule = null;
 let rawJson = null;
@@ -11,6 +11,7 @@ const moduleConstructors = {
 let fileInput, containerDiv, moduleButtonsDiv;
 let columnPanel, projectSelect, typeSelect, generateBtn, nodesContainer, addNodeBtn;
 let fullscreenCtrlBar, toggleFullscreenBtn, exportImageBtn; 
+let dynamicFilterContainer; // 动态筛选组件的挂载 DOM 变量
 
 document.addEventListener('DOMContentLoaded', () => {
     fileInput = document.getElementById('excelUpload');
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fullscreenCtrlBar = document.getElementById('fullscreenCtrlBar');
     toggleFullscreenBtn = document.getElementById('toggleFullscreenBtn');
     exportImageBtn = document.getElementById('exportImageBtn'); 
+    dynamicFilterContainer = document.getElementById('dynamicFilterContainer'); 
 
     CONFIG.modules.forEach(mod => {
         if (mod.enabled && moduleConstructors[mod.id]) {
@@ -74,7 +76,7 @@ function toggleFullscreenMode() {
     }
 }
 
-// 纯前端快速拍照导出（基于 Tr 精准剪裁本月前所有行 + 自定义 YYMMDD 文件名）
+// 纯前端快速拍照导出
 function exportModuleToImage() {
     if (!containerDiv || containerDiv.children.length === 0) {
         alert('没有可以导出的日历内容');
@@ -85,21 +87,20 @@ function exportModuleToImage() {
     exportImageBtn.innerHTML = '<span>⏳</span> <span>正在渲染排期看板...</span>';
     exportImageBtn.disabled = true;
 
-    // 🎯 1. 动态生成精简时间戳（精确到日）
     const now = new Date();
     const curYear = now.getFullYear();
     const curMonthNum = now.getMonth() + 1;
     const curDateNum = now.getDate();
     const timeStampStr = `📷 截图留存时间：${curYear}-${String(curMonthNum).padStart(2, '0')}-${String(curDateNum).padStart(2, '0')}`;
 
-    // 🎯 2. 动态从数据源中读取当前主看板的目标年份与月份（用于页面内标题展示）
     let targetYear = curYear;
     let targetMonth = curMonthNum;
     let displayTitleText = "项目管理日历";
     
     try {
-        if (globalRecords && globalRecords.length > 0) {
-            const firstDate = globalRecords[0].date; 
+        const activeRecords = getFilteredRecords();
+        if (activeRecords && activeRecords.length > 0) {
+            const firstDate = activeRecords[0].date; 
             targetYear = firstDate.getFullYear();
             targetMonth = firstDate.getMonth() + 1;
             displayTitleText = `📅 项目管理日历 (${targetYear}年${String(targetMonth).padStart(2, '0')}月)`;
@@ -108,7 +109,6 @@ function exportModuleToImage() {
         console.log("提取目标月份失败", e);
     }
 
-    // 🎯 3. 注入高级双端标题栏
     const titleHeader = document.createElement('div');
     titleHeader.style.width = '100%';
     titleHeader.style.boxSizing = 'border-box';
@@ -136,7 +136,6 @@ function exportModuleToImage() {
     titleHeader.appendChild(titleRight);
     containerDiv.insertBefore(titleHeader, containerDiv.firstChild);
 
-    // 🎯 4. 样式解封以铺满全长图
     const originalHeight = containerDiv.style.height;
     const originalMaxHeight = containerDiv.style.maxHeight;
     const originalOverflow = containerDiv.style.overflow;
@@ -163,7 +162,6 @@ function exportModuleToImage() {
         el.style.overflowY = 'visible';
     });
 
-    // 🎯 5. 精准拦截：针对 .calendar-week-row 标签行做真日期过滤
     const calendarRows = containerDiv.querySelectorAll('.calendar-week-row');
     const hiddenRows = [];
     
@@ -187,7 +185,6 @@ function exportModuleToImage() {
         }
     });
 
-    // 🎯 6. 瞬间超清拍照
     html2canvas(containerDiv, {
         useCORS: true,          
         allowTaint: true,       
@@ -195,7 +192,6 @@ function exportModuleToImage() {
         backgroundColor: '#ffffff',
         windowHeight: containerDiv.scrollHeight 
     }).then(canvas => {
-        // 🎯 7. 即刻恢复网页现场原始形态
         containerDiv.removeChild(titleHeader);
         containerDiv.style.height = originalHeight;
         containerDiv.style.maxHeight = originalMaxHeight;
@@ -213,13 +209,11 @@ function exportModuleToImage() {
             item.el.style.display = item.prevDisplay;
         });
 
-        // 🎯 8. 【核心修改点】：生成期望的“项目日历_260523”格式文件名（YYMMDD）
-        const shortYear = String(curYear).slice(-2); // 提取年份后两位，如 "26"
-        const shortMonth = String(curMonthNum).padStart(2, '0'); // 双位月份，如 "05"
-        const shortDate = String(curDateNum).padStart(2, '0'); // 双位日期，如 "23"
+        const shortYear = String(curYear).slice(-2); 
+        const shortMonth = String(curMonthNum).padStart(2, '0'); 
+        const shortDate = String(curDateNum).padStart(2, '0'); 
         const fileName = `项目日历_${shortYear}${shortMonth}${shortDate}.png`;
 
-        // 触发长图高速下载
         const imageUri = canvas.toDataURL("image/png");
         const downloadLink = document.createElement('a');
         downloadLink.download = fileName;
@@ -232,7 +226,6 @@ function exportModuleToImage() {
         exportImageBtn.innerHTML = originalText;
         exportImageBtn.disabled = false;
     }).catch(err => {
-        // 异常回滚保护机制
         if (titleHeader.parentNode === containerDiv) {
             containerDiv.removeChild(titleHeader);
         }
@@ -277,6 +270,7 @@ async function handleFileUpload(e) {
         containerDiv.innerHTML = '<div style="text-align:center; padding:60px; color:#8aa0b5;">✅ 已上传文件，请配置节点映射并点击“生成日历”</div>';
         
         if (fullscreenCtrlBar) fullscreenCtrlBar.style.display = 'none';
+        if (dynamicFilterContainer) dynamicFilterContainer.innerHTML = ''; 
         globalRecords = [];
     }
 }
@@ -393,6 +387,7 @@ function generateFromSelectedColumns() {
     }
     
     globalRecords = [];
+    // 💡 优化：为了支持对未映射的其他Excel列进行自由过滤，我们将每一行的原始 Excel Row 数据同步挂载到 Record 对象中
     for (let row of rawJson) {
         const projectName = row[projectCol] ? String(row[projectCol]).trim() : "";
         if (!projectName) continue;
@@ -411,7 +406,8 @@ function generateFromSelectedColumns() {
                 description: taskVal,
                 type: typeValue,
                 startDate: null,
-                endDate: null
+                endDate: null,
+                _rawRow: row // 🚀 保存完整的原始Excel行数据，供任意维度过滤使用
             });
         }
     }
@@ -422,11 +418,15 @@ function generateFromSelectedColumns() {
         alert('没有有效的节点数据，请检查日期列格式或说明列是否为空');
         containerDiv.innerHTML = '<div style="text-align:center;padding:40px;">无有效数据</div>';
         if (fullscreenCtrlBar) fullscreenCtrlBar.style.display = 'none';
+        if (dynamicFilterContainer) dynamicFilterContainer.innerHTML = '';
         return;
     }
     
     if (fullscreenCtrlBar) fullscreenCtrlBar.style.display = 'flex';
     
+    // 🚀 初始化完全自由组合的选择器界面
+    buildAdvancedFilterUI(projectCol, typeCol);
+
     if (currentModule) {
         currentModule.update(globalRecords);
     } else {
@@ -434,12 +434,128 @@ function generateFromSelectedColumns() {
     }
 }
 
+// 🚀 核心重构：构建两组完全自由、解耦的 [维度选择 -> 值选择] 智能联动筛选器
+function buildAdvancedFilterUI(defaultProjCol, defaultTypeCol) {
+    if (!dynamicFilterContainer) return;
+    dynamicFilterContainer.innerHTML = '';
+
+    // 1. 创建第一组筛选器的容器并加入内部
+    createFilterGroup(1, defaultProjCol);
+    // 2. 创建第二组筛选器的容器并加入内部
+    createFilterGroup(2, defaultTypeCol || currentColumns[0]);
+}
+
+// 🚀 新增辅助函数：生成单组“维度+值”自由联动组合选框
+function createFilterGroup(groupId, defaultSelectedColumn) {
+    const groupWrapper = document.createElement('div');
+    groupWrapper.style.display = 'flex';
+    groupWrapper.style.alignItems = 'center';
+    groupWrapper.style.gap = '4px';
+    groupWrapper.style.border = '1px solid #e2e8f0';
+    groupWrapper.style.padding = '2px 6px';
+    groupWrapper.style.borderRadius = '8px';
+    groupWrapper.style.backgroundColor = '#f8fafc';
+
+    // 创建“选择维度”下拉框（比如选择按项目名称、产品经理还是项目状态）
+    const dimSelect = document.createElement('select');
+    dimSelect.id = `filterDim_${groupId}`;
+    dimSelect.className = 'filter-select';
+    dimSelect.style.border = 'none';
+    dimSelect.style.backgroundColor = 'transparent';
+    dimSelect.style.fontWeight = 'bold';
+    dimSelect.style.maxWidth = '120px';
+    
+    currentColumns.forEach(col => {
+        const opt = document.createElement('option');
+        opt.value = col;
+        opt.textContent = `👁️ ${col}`;
+        if (col === defaultSelectedColumn) opt.selected = true;
+        dimSelect.appendChild(opt);
+    });
+
+    // 创建对应的“选择具体值”下拉框
+    const valSelect = document.createElement('select');
+    valSelect.id = `filterVal_${groupId}`;
+    valSelect.className = 'filter-select';
+    valSelect.style.border = 'none';
+    valSelect.style.backgroundColor = 'transparent';
+    valSelect.style.maxWidth = '150px';
+
+    // 核心函数：当使用者改变了“筛选维度”，动态更新右边的“可选值列表”
+    const updateValueOptions = () => {
+        const currentDim = dimSelect.value;
+        valSelect.innerHTML = `<option value="">🔍 全部</option>`;
+        
+        // 动态从全局记录的原始数据中抽取该列下所有的去重值
+        const valueSet = new Set();
+        globalRecords.forEach(r => {
+            if (r._rawRow && r._rawRow[currentDim]) {
+                valueSet.add(String(r._rawRow[currentDim]).trim());
+            }
+        });
+
+        Array.from(valueSet).sort().forEach(val => {
+            if (val) {
+                valSelect.innerHTML += `<option value="${escapeHtml(val)}">${escapeHtml(val)}</option>`;
+            }
+        });
+    };
+
+    // 绑定联动事件
+    dimSelect.addEventListener('change', () => {
+        updateValueOptions();
+        executeCombinedFilter();
+    });
+    valSelect.addEventListener('change', executeCombinedFilter);
+
+    // 首次载入初始化填充可选值
+    updateValueOptions();
+
+    groupWrapper.appendChild(dimSelect);
+    groupWrapper.appendChild(valSelect);
+    dynamicFilterContainer.appendChild(groupWrapper);
+}
+
+function executeCombinedFilter() {
+    const filtered = getFilteredRecords();
+    if (currentModule) {
+        currentModule.update(filtered);
+    }
+}
+
+// 🚀 核心重构：联合捕捉两个自定义维度的双向过滤算法
+function getFilteredRecords() {
+    const dim1 = document.getElementById('filterDim_1')?.value;
+    const val1 = document.getElementById('filterVal_1')?.value;
+    const dim2 = document.getElementById('filterDim_2')?.value;
+    const val2 = document.getElementById('filterVal_2')?.value;
+
+    return globalRecords.filter(r => {
+        // 第一组自定义条件的匹配校验
+        let match1 = true;
+        if (dim1 && val1) {
+            match1 = r._rawRow && String(r._rawRow[dim1]).trim() === val1;
+        }
+        
+        // 第二组自定义条件的匹配校验
+        let match2 = true;
+        if (dim2 && val2) {
+            match2 = r._rawRow && String(r._rawRow[dim2]).trim() === val2;
+        }
+
+        return match1 && match2;
+    });
+}
+
 function switchModule(moduleId) {
     const ModuleConstructor = moduleConstructors[moduleId];
     if (!ModuleConstructor) return;
     if (currentModule && currentModule.destroy) currentModule.destroy();
     currentModule = ModuleConstructor;
-    currentModule.init(containerDiv, globalRecords);
+    
+    const activeData = getFilteredRecords();
+    currentModule.init(containerDiv, activeData);
+    
     document.querySelectorAll('.module-btn').forEach(btn => {
         if (btn.dataset.module === moduleId) btn.classList.add('active');
         else btn.classList.remove('active');
